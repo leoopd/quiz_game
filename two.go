@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"encoding/csv"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -36,59 +38,75 @@ func openAndParseCsv2(location string) []string {
 	return quiz
 }
 
-func timer(c chan *time.Time) {
-	timer := time.NewTimer(100 * time.Second)
-	<-timer.C
-}
-
-func countPoints2(quiz []string, pnts chan int, qnts chan int) {
-
-	//Compares user input via the console to the answer and counts
-	//how many questions were asked, how many were answered correctly.
-	//The array of strings that's handed over should have the format ["question", "answer"]
-	//and can contain as many question:answer pairs as needed.
-	var answer string
-	var points int
-	var questions int
-
-	for i := 0; i < len(quiz)-1; i += 2 {
-		fmt.Println("What is ", quiz[i])
-		fmt.Scanf("%s", &answer)
-
-		if answer == string(quiz[i+1]) {
-			points += 1
-			pnts <- points
-		}
-		questions += 1
-
-		qnts <- questions
-	}
-}
-
 func main() {
 
-	pnts := make(chan int, 13)
-	qnts := make(chan int, 13)
-	tmr := make(chan *time.Time)
+	var points int
+	var questions int
+	quiz := openAndParseCsv2("default.csv")
+	resultPoints := make(chan int)
+	resultQuestions := make(chan int)
+	timer := time.NewTicker(100 * time.Second)
 
 	go func() {
-		countPoints2(openAndParseCsv2("default.csv"), pnts, qnts)
+		for i := 0; ; {
+			select {
+			case <-timer.C:
+				resultPoints <- points
+				resultQuestions <- questions
+				close(resultPoints)
+				close(resultQuestions)
+				return
+
+			default:
+				if i > len(quiz)-1 {
+					resultPoints <- points
+					resultQuestions <- questions
+					close(resultPoints)
+					close(resultQuestions)
+					return
+				}
+
+				ch := make(chan string)
+				fmt.Println("What is ", quiz[i])
+
+				go func(ch chan string) {
+					reader := bufio.NewReader(os.Stdin)
+					for {
+						s, err := reader.ReadString('\n')
+						if err != nil {
+							close(ch)
+							return
+						}
+						ch <- s
+					}
+				}(ch)
+
+			stdinloop:
+				for {
+					select {
+					case answer, ok := <-ch:
+						if !ok {
+							break stdinloop
+						} else {
+							if strings.Trim(answer, "\n") == string(quiz[i+1]) {
+								points += 1
+							}
+							questions += 1
+							i += 2
+						}
+					case <-timer.C:
+						resultPoints <- points
+						resultQuestions <- questions
+						close(resultPoints)
+						close(resultQuestions)
+						return
+					}
+				}
+			}
+		}
 	}()
 
-	go func() {
-		timer(tmr)
-	}()
-
-	select {
-	case <-pnts:
-		points := <-pnts
-		questions := <-qnts
-		fmt.Printf("You scored %d points.\nThere were %d questions in total.\n", points, questions)
-
-	case <-tmr:
-		points := <-pnts
-		questions := <-qnts
-		fmt.Printf("You scored %d points.\nThere were %d questions in total.\n", points, questions)
-	}
-
+	points = <-resultPoints
+	questions = <-resultQuestions
+	fmt.Printf("You scored %d points.\nThere were %d questions in total.\n", points, questions)
 }
