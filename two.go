@@ -1,14 +1,10 @@
 package main
 
 import (
-	"bufio"
 	"encoding/csv"
-	"fmt"
 	"io"
 	"log"
 	"os"
-	"strings"
-	"time"
 )
 
 func openAndParseCsv2(location string) []string {
@@ -38,75 +34,57 @@ func openAndParseCsv2(location string) []string {
 	return quiz
 }
 
-func main() {
+// func main() {
 
-	var points int
-	var questions int
-	quiz := openAndParseCsv2("default.csv")
-	resultPoints := make(chan int)
-	resultQuestions := make(chan int)
-	timer := time.NewTicker(100 * time.Second)
+// 	var points int
+// 	var questions int
+// 	var answers []string
+// 	quiz := openAndParseCsv2("default.csv")
+// 	ans := make(chan []string)
+// 	timer := time.NewTicker(5 * time.Second)
 
-	go func() {
-		for i := 0; ; {
-			select {
-			case <-timer.C:
-				resultPoints <- points
-				resultQuestions <- questions
-				close(resultPoints)
-				close(resultQuestions)
-				return
+// 	go func() {
+// 		for i := 0; ; {
+// 			ch := make(chan string)
+// 			fmt.Println("What is ", quiz[i])
 
-			default:
-				if i > len(quiz)-1 {
-					resultPoints <- points
-					resultQuestions <- questions
-					close(resultPoints)
-					close(resultQuestions)
-					return
-				}
+// 			go func(ch chan string) {
+// 				reader := bufio.NewReader(os.Stdin)
+// 				for {
+// 					s, err := reader.ReadString('\n')
+// 					if err != nil {
+// 						close(ch)
+// 						return
+// 					}
+// 					ch <- s
+// 				}
+// 			}(ch)
 
-				ch := make(chan string)
-				fmt.Println("What is ", quiz[i])
+// 		stdinloop:
+// 			for {
+// 				select {
+// 				case answer, ok := <-ch:
+// 					if !ok {
+// 						break stdinloop
+// 					} else {
+// 						answers = append(answers, strings.Trim(answer, "\n"))
+// 					}
+// 				case <-timer.C:
+// 					ans <- answers
+// 					return
+// 				}
+// 			}
+// 		}
+// 	}()
 
-				go func(ch chan string) {
-					reader := bufio.NewReader(os.Stdin)
-					for {
-						s, err := reader.ReadString('\n')
-						if err != nil {
-							close(ch)
-							return
-						}
-						ch <- s
-					}
-				}(ch)
+// 	answers = <-ans
+// 	fmt.Println(answers)
 
-			stdinloop:
-				for {
-					select {
-					case answer, ok := <-ch:
-						if !ok {
-							break stdinloop
-						} else {
-							if strings.Trim(answer, "\n") == string(quiz[i+1]) {
-								points += 1
-							}
-							questions += 1
-							i += 2
-						}
-					case <-timer.C:
-						resultPoints <- points
-						resultQuestions <- questions
-						close(resultPoints)
-						close(resultQuestions)
-						return
-					}
-				}
-			}
-		}
-	}()
-
-	points = <-resultPoints
-	questions = <-resultQuestions
-	fmt.Printf("You scored %d points.\nThere were %d questions in total.\n", points, questions)
-}
+// 	for i := 1; i < len(answers); i += 2 {
+// 		if answers[i] == quiz[i*2] {
+// 			points += 1
+// 		}
+// 		questions += 1
+// 	}
+// 	fmt.Printf("You scored %d points.\nThere were %d questions in total.\n", points, questions)
+// }
