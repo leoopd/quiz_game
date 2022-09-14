@@ -39,12 +39,15 @@ func ParseCsv(location string) (questions, solutions []string) {
 
 func Asker(ctx context.Context, ticker *time.Ticker, questions, solutions []string) (points, amount int) {
 
+	ctx, cancel := context.WithCancel(ctx)
+
 	ch := make(chan int)
 	amount = 1
 
 	for i := 0; i < len(questions); i++ {
 		go func(ctx context.Context, ch chan int, i int) {
 
+			var tmp int
 			reader := bufio.NewReader(os.Stdin)
 			for {
 				fmt.Println("What is: ", questions[i])
@@ -53,10 +56,11 @@ func Asker(ctx context.Context, ticker *time.Ticker, questions, solutions []stri
 					close(ch)
 					return
 				} else if s == solutions[i] {
-					ch <- 1
+					tmp = 1
 				} else {
-					ch <- 0
+					tmp = 0
 				}
+				ch <- tmp
 			}
 		}(ctx, ch, i)
 	}
@@ -76,17 +80,17 @@ stdinloop:
 				}
 			}
 		case <-ticker.C:
-
+			return points, amount
+			cancel()
 		}
 	}
-	fmt.Println("Done, stdin must be closed")
+	return points, amount
 }
 
 func main() {
 
-	var definedTime time.Duration
+	var definedTime time.Duration = 2
 	ctx := context.Background()
-	ctx, _ = context.WithCancel(ctx)
 	ticker := time.NewTicker(definedTime * time.Second)
 
 	//Seems to work
