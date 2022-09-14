@@ -21,7 +21,7 @@ func asker(ctx context.Context, ticker *time.Ticker, questions, solutions []stri
 		var tmp int
 		reader := bufio.NewReader(os.Stdin)
 		for i := 0; i < len(questions); i++ {
-			fmt.Println("What is: ", questions[i])
+			fmt.Printf("What is: %s?\n", questions[i])
 			s, err := reader.ReadString('\n')
 			if err != nil {
 				close(ch)
