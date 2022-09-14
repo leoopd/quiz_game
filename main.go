@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"time"
 )
@@ -21,9 +22,11 @@ func main() {
 	fmt.Println("GO!")
 	time.Sleep(333 * time.Millisecond)
 
-	var definedTime time.Duration = 2
+	definedTime := flag.Int("time", 1, "specifies the time limit for the quiz")
+	flag.Parse()
+
 	ctx := context.Background()
-	ticker := time.NewTicker(definedTime * time.Second)
+	ticker := time.NewTicker(time.Duration(*definedTime) * time.Second)
 
 	points, amount := asker(ctx, ticker, questions, solutions)
 
