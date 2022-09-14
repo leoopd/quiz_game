@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func ParseCsv(location string) (questions, solutions []string) {
+func parseCsv(location string) (questions, solutions []string) {
 
 	quizFile, err := os.Open(location)
 	if err != nil {

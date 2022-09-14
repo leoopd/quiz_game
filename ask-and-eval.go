@@ -9,14 +9,13 @@ import (
 	"time"
 )
 
-func Asker(ctx context.Context, ticker *time.Ticker, questions, solutions []string) (points, amount int) {
+func asker(ctx context.Context, ticker *time.Ticker, questions, solutions []string) (points, amount int) {
 
 	ctx, cancel := context.WithCancel(ctx)
 
 	ch := make(chan int)
 	amount = 1
 
-	// for i := 0; i < len(questions); i++ {
 	go func(ctx context.Context, ch chan int) {
 
 		var tmp int
@@ -35,7 +34,6 @@ func Asker(ctx context.Context, ticker *time.Ticker, questions, solutions []stri
 			ch <- tmp
 		}
 	}(ctx, ch)
-	// }
 
 stdinloop:
 	for {
@@ -52,9 +50,10 @@ stdinloop:
 				}
 			}
 		case <-ticker.C:
-			return points, amount
 			cancel()
+			return points, amount
 		}
 	}
+	cancel()
 	return points, amount
 }
