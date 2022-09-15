@@ -9,7 +9,10 @@ import (
 
 func main() {
 
-	questions, solutions := parseCsv("default.csv")
+	definedTime := flag.Int("time", 1, "specifies the time limit for the quiz. Format: 1s/1m/1h")
+	quizLink := flag.String("quiz", "default.csv", "specifies the link to the quiz. Format: dir/name.csv")
+	flag.Parse()
+	questions, solutions := parseCsv(*quizLink)
 
 	fmt.Println("Please press 'enter' to start the quiz")
 	fmt.Scanln()
@@ -21,9 +24,6 @@ func main() {
 	time.Sleep(1 * time.Second)
 	fmt.Println("GO!")
 	time.Sleep(333 * time.Millisecond)
-
-	definedTime := flag.Int("time", 1, "specifies the time limit for the quiz")
-	flag.Parse()
 
 	ctx := context.Background()
 	ticker := time.NewTicker(time.Duration(*definedTime) * time.Second)
