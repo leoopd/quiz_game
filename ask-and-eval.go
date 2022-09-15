@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+//Asks the question, takes in the user Input in a non-blocking way and evaluates if the answer is correct.
+//The function returns two counters, points for every correct answer and amount for every question asked.
 func asker(ctx context.Context, ticker *time.Ticker, questions, solutions []string, shuffleQuestions bool) (points, amount int) {
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -31,6 +33,7 @@ func asker(ctx context.Context, ticker *time.Ticker, questions, solutions []stri
 		}
 	}
 
+	//Non-blocking way of taking in user input by launching a GO-Routine and sending the input via a channel back to the function. 
 	go func(ctx context.Context, ch chan int, order []int) {
 
 		var tmp int
@@ -50,6 +53,7 @@ func asker(ctx context.Context, ticker *time.Ticker, questions, solutions []stri
 		}
 	}(ctx, ch, order)
 
+//Takes in the user input that was sent through the channel and evaluates if the answer is correct.
 stdinloop:
 	for {
 		select {
